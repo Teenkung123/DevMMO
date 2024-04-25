@@ -1,0 +1,19 @@
+name: DevMMO
+version: '${version}'
+main: com.teenkung.devmmo.DevMMO
+api-version: '1.20'
+depend:
+  - MythicMobs
+commands:
+  spawn-mythicmobs:
+    aliases:
+      - summon-mythicmobs
+      - smm
+      - summonmythic
+    permission: op
+    permission-message: don't
+
+permissions:
+  elytra.bypass:
+    description: Allows using fireworks to boost elytra speed
+    default: false

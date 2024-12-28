@@ -1,0 +1,24 @@
+StaminaModule:
+  # The rate at which stamina decreases while sprinting.
+  DecreaseRate: 1
+
+  # The rate at which stamina regenerates when not sprinting.
+  RegenRate: 1
+
+  # If the player's stamina falls below this threshold, we'll show a "Low Stamina!" warning.
+  LowStaminaThreshold: 5
+
+  # If the player's stamina is at or below this threshold, they'll be forced to stop sprinting.
+  ExhaustedThreshold: 1
+
+  # How long (in ticks) the slowness effect is applied when the player is exhausted.
+  ExhaustedSlownessDuration: 100
+
+  # The level of slowness effect to apply (1 = Slowness I, 2 = Slowness II, etc.).
+  ExhaustedSlownessLevel: 2
+
+  # Whether to show a title message for Low Stamina warnings.
+  ShowLowStaminaTitle: true
+
+  # Debug mode will print additional information to the console.
+  DebugMode: false

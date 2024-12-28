@@ -1,4 +1,4 @@
-package com.teenkung.devmmo;
+package com.teenkung.devmmo.Commands.SpawnMythicMobs;
 
 import io.lumine.mythic.api.mobs.MythicMob;
 import io.lumine.mythic.bukkit.BukkitAdapter;

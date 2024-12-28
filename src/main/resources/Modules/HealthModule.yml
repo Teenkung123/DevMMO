@@ -1,0 +1,5 @@
+HealthModule:
+  # Currently, there's no specific config needed for storing/restoring health.
+  # If you want to add future settings, such as a "MaxHealthCap" or "HealOnJoin",
+  # you can do so here. For now, this is just a placeholder.
+  DebugMode: false

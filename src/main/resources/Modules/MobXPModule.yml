@@ -1,0 +1,23 @@
+# MobXPModule.yml
+MobXPModule:
+  # A mathematical expression for the base XP.
+  # We'll do something like "30 + (0.4 * ({level} ^ 2.25))"
+  # to emulate your original formula. But you can change it freely.
+  BaseFormula: "30 + (0.4 * ({level} ^ 2.25))"
+
+  # The portion that modifies XP by the player's additional XP stat, if any.
+  # e.g. finalXP = baseXP + (baseXP * {additionalXp}/100).
+  # If you'd like direct formula control, we could do something more advanced,
+  # but let's keep it simpler here.
+  AdditionalXPStatName: "ADDITIONAL_EXPERIENCE"
+
+  # Title display configuration (time in milliseconds)
+  TitleFadeIn: 150
+  TitleStay: 500
+  TitleFadeOut: 150
+  TitleMessage: "<yellow>+{exp}<green> EXP!"
+
+  # The sound to play when awarding XP
+  AwardSound: "BLOCK_NOTE_BLOCK_BELL"
+  SoundVolume: 1.0
+  SoundPitch: 1.2

@@ -8,8 +8,8 @@ version = '1.0-SNAPSHOT'
 repositories {
     mavenCentral()
     maven {
-        name = "spigotmc-repo"
-        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+        name = "papermc-repo"
+        url = "https://repo.papermc.io/repository/maven-public/"
     }
     maven {
         name = "sonatype"
@@ -23,16 +23,19 @@ repositories {
         name = "phoenix"
         url = 'https://nexus.phoenixdevt.fr/repository/maven-public/'
     }
+    maven { url "https://maven.enginehub.org/repo/" }
 }
 
 dependencies {
-    compileOnly "org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT"
+    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
     compileOnly("io.lumine:MythicLib-dist:1.6-SNAPSHOT")
     compileOnly 'io.lumine:Mythic-Dist:5.3.5-SNAPSHOT'
     compileOnly 'net.Indyuce:MMOCore-API:1.12.1-SNAPSHOT'
+    compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.1.0-SNAPSHOT'
+    implementation 'net.objecthunter:exp4j:0.4.8'
 }
 
-def targetJavaVersion = 17
+def targetJavaVersion = 21
 java {
     def javaVersion = JavaVersion.toVersion(targetJavaVersion)
     sourceCompatibility = javaVersion
@@ -40,10 +43,6 @@ java {
     if (JavaVersion.current() < javaVersion) {
         toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
-}
-
-jar {
-    destinationDirectory = file("D:/Server/Oneblock 1.20.4/plugins")
 }
 
 tasks.withType(JavaCompile).configureEach {

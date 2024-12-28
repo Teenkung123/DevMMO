@@ -1,0 +1,20 @@
+HealthModule:
+  Enabled: true
+
+StaminaModule:
+  Enabled: true
+
+FireworkBlocker:
+  Enabled: true
+
+DamageTracker:
+  Enabled: true
+
+MobXPModule:
+  Enabled: true
+
+EXPShareModule:
+  Enabled: false  # <-- Remember this depends on MobXPModule
+
+RegionLevel:
+  Enabled: true

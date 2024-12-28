@@ -1,0 +1,12 @@
+FireworkBlocker:
+  Worlds: []
+
+  # If true, players cannot use firework rockets while gliding with an elytra
+  # unless they have the bypass permission (below).
+  BlockWhenGliding: true
+
+  # The permission node that bypasses the block check.
+  BypassPermission: "elytra.bypass"
+
+  # The message to display in the action bar if the usage is blocked.
+  BlockedMessage: "<red>Firework is not allowed in MMO world!"

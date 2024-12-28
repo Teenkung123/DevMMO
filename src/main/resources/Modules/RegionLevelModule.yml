@@ -1,0 +1,8 @@
+RegionLevel:
+  DebugMode: false
+  Regions:
+    greenhaven_plains:
+      BaseLevel: 1
+      Weight:
+        '2': 66
+        '3-10': 33

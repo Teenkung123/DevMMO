@@ -1,0 +1,5 @@
+EXPShareModule:
+  # WARNING: This module depends on "MobXPModule" being enabled!
+  # If "MobXPModule.Enabled" is false, this entire module will do nothing.
+
+  DebugMode: false

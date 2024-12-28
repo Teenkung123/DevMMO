@@ -1,20 +1,20 @@
 HealthModule:
-  Enabled: true
+  Enabled: false
 
 StaminaModule:
-  Enabled: true
+  Enabled: false
 
 FireworkBlocker:
-  Enabled: true
+  Enabled: false
 
 DamageTracker:
-  Enabled: true
+  Enabled: false
 
 MobXPModule:
-  Enabled: true
+  Enabled: false
 
 EXPShareModule:
-  Enabled: false  # <-- Remember this depends on MobXPModule
+  Enabled: false
 
 RegionLevel:
-  Enabled: true
+  Enabled: false

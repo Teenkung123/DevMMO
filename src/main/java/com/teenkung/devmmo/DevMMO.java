@@ -68,6 +68,13 @@ public class DevMMO extends JavaPlugin {
      */
     public void unloadAll() {
         HandlerList.unregisterAll(this);
+        HandlerList.unregisterAll(healthModule);
+        HandlerList.unregisterAll(staminaModule);
+        HandlerList.unregisterAll(fireworkBlocker);
+        HandlerList.unregisterAll(damageTracker);
+        HandlerList.unregisterAll(mobXPModule);
+        HandlerList.unregisterAll(expShareModule);
+        HandlerList.unregisterAll(regionLevelModule);
         staminaModule.shutdown();
     }
 

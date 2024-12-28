@@ -3,23 +3,23 @@ package com.teenkung.devmmo.Modules;
 import com.teenkung.devmmo.DevMMO;
 import net.Indyuce.mmocore.api.event.PlayerResourceUpdateEvent;
 import net.Indyuce.mmocore.api.player.PlayerData;
+import net.Indyuce.mmocore.api.player.profess.resource.PlayerResource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.title.Title;
-import net.kyori.adventure.title.TitlePart;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,14 +30,21 @@ public class StaminaModule implements Listener {
 
     private final DevMMO plugin;
     private final Map<Player, BukkitTask> sprintTasks = new HashMap<>();
-    private final double decreaseRate;
-    private final double regenRate;
+    private final List<String> worlds = new ArrayList<>();
+    private final long decreaseRate;
+    private final int decreaseAmount;
     private final int lowThreshold;
     private final int exhaustedThreshold;
     private final boolean showLowTitle;
     private final int slownessDuration;
     private final int slownessLevel;
     private final boolean debugMode;
+
+    private final String title;
+    private final String subTitle;
+    private final Long fadeIn;
+    private final Long stay;
+    private final Long fadeOut;
 
     public StaminaModule(DevMMO plugin) {
         this.plugin = plugin;
@@ -46,10 +53,12 @@ public class StaminaModule implements Listener {
         }
 
         // Load config values
+        worlds.addAll(plugin.getConfigLoader().getStaminaConfig()
+                .getStringList("StaminaModule.AllowedWorlds"));
         decreaseRate = plugin.getConfigLoader().getStaminaConfig()
-                .getDouble("StaminaModule.DecreaseRate", 1.0);
-        regenRate = plugin.getConfigLoader().getStaminaConfig()
-                .getDouble("StaminaModule.RegenRate", 1.0);
+                .getLong("StaminaModule.DecreaseRate", 20L);
+        decreaseAmount = plugin.getConfigLoader().getStaminaConfig()
+                .getInt("StaminaModule.DecreaseAmount", 1);
         lowThreshold = plugin.getConfigLoader().getStaminaConfig()
                 .getInt("StaminaModule.LowStaminaThreshold", 5);
         exhaustedThreshold = plugin.getConfigLoader().getStaminaConfig()
@@ -62,6 +71,17 @@ public class StaminaModule implements Listener {
                 .getInt("StaminaModule.ExhaustedSlownessLevel", 2);
         debugMode = plugin.getConfigLoader().getStaminaConfig()
                 .getBoolean("StaminaModule.DebugMode", false);
+
+        title = plugin.getConfigLoader().getStaminaConfig()
+                .getString("StaminaModule.Indicator.Title", "");
+        subTitle = plugin.getConfigLoader().getStaminaConfig()
+                .getString("StaminaModule.Indicator.SubTitle", "<red>Low Stamina!");
+        fadeIn = plugin.getConfigLoader().getStaminaConfig()
+                .getLong("StaminaModule.Indicator.FadeIn", 0L);
+        stay = plugin.getConfigLoader().getStaminaConfig()
+                .getLong("StaminaModule.Indicator.Stay", 1200L);
+        fadeOut = plugin.getConfigLoader().getStaminaConfig()
+                .getLong("StaminaModule.Indicator.FadeOut", 0L);
     }
 
     /**
@@ -79,24 +99,34 @@ public class StaminaModule implements Listener {
                 return;
             }
             PlayerData data = PlayerData.get(player);
-            if (player.isSprinting()
-                    && !player.isSneaking()
-                    && !player.isFlying()
-                    && player.getGameMode() != GameMode.CREATIVE
-                    && player.getGameMode() != GameMode.SPECTATOR) {
+            if (isRunning(player) && worlds.contains(player.getWorld().getName())) {
 
                 // Decrease stamina
-                data.giveStamina(-decreaseRate, PlayerResourceUpdateEvent.UpdateReason.SKILL_COST);
+                double d = -decreaseAmount;
+                data.giveStamina(d, PlayerResourceUpdateEvent.UpdateReason.SKILL_COST);
+
+                if (debugMode) {
+                    player.showTitle(Title.title(
+                            MiniMessage.miniMessage().deserialize(String.valueOf(data.getStamina())),
+                                    Component.text(d),
+                                    Title.Times.times(
+                                            Duration.ofMillis(0L),
+                                            Duration.ofMillis(1200L),
+                                            Duration.ofMillis(0L)
+                                    )
+                            )
+                    );
+                }
 
                 // Check thresholds
                 if (data.getStamina() <= lowThreshold && showLowTitle) {
                     player.showTitle(Title.title(
-                            Component.empty(),
-                            MiniMessage.miniMessage().deserialize("<red>Low Stamina!"),
+                            MiniMessage.miniMessage().deserialize(title),
+                            MiniMessage.miniMessage().deserialize(subTitle),
                             Title.Times.times(
-                                    Duration.ofMillis(0L),
-                                    Duration.ofMillis(5000L),
-                                    Duration.ofMillis(100L)
+                                    Duration.ofMillis(fadeIn),
+                                    Duration.ofMillis(stay),
+                                    Duration.ofMillis(fadeOut)
                             )
                         )
                     );
@@ -112,11 +142,8 @@ public class StaminaModule implements Listener {
                     ));
                     player.setSprinting(false);
                 }
-            } else {
-                // Regen stamina
-                data.giveStamina(regenRate, PlayerResourceUpdateEvent.UpdateReason.REGENERATION);
             }
-        }, 20, 20); // run every second
+        }, 0, decreaseRate);
 
         sprintTasks.put(player, task);
     }
@@ -126,5 +153,23 @@ public class StaminaModule implements Listener {
             task.cancel();
         }
         sprintTasks.clear();
+    }
+
+    @EventHandler
+    public void onResourceUpdate(PlayerResourceUpdateEvent event) {
+        if (event.getResource() != PlayerResource.STAMINA) {
+            return;
+        }
+        Player player = event.getPlayer();
+        if (isRunning(player) && worlds.contains(player.getWorld().getName()) && event.getReason() == PlayerResourceUpdateEvent.UpdateReason.REGENERATION) {
+            if (debugMode) player.sendMessage("Stamina Regeneration: Canceled | " + event.getAmount() + " | " + event.getReason());
+            event.setCancelled(true);
+            return;
+        }
+        if (debugMode) player.sendMessage("Stamina Regeneration: Not Canceled | " +  + event.getAmount() + " | " + event.getReason());
+    }
+
+    private boolean isRunning(Player player) {
+        return (player.isSprinting() && !player.isSneaking() && !player.isFlying() && player.getGameMode() != GameMode.CREATIVE && player.getGameMode() != GameMode.SPECTATOR);
     }
 }

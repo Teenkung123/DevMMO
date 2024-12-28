@@ -1,9 +1,12 @@
 StaminaModule:
-  # The rate at which stamina decreases while sprinting.
-  DecreaseRate: 1
+  # World names where the module is enabled.
+  AllowedWorlds: []
 
-  # The rate at which stamina regenerates when not sprinting.
-  RegenRate: 1
+  # The rate of the stamina decrease (in ticks).
+  DecreaseRate: 20
+
+    # The amount of stamina to decrease each time the rate is reached.
+  DecreaseAmount: 1
 
   # If the player's stamina falls below this threshold, we'll show a "Low Stamina!" warning.
   LowStaminaThreshold: 5
@@ -19,6 +22,14 @@ StaminaModule:
 
   # Whether to show a title message for Low Stamina warnings.
   ShowLowStaminaTitle: true
+
+  # The title message to show when the player's stamina is low.
+  Indicator:
+    Title: ""
+    SubTitle: "<red>Low Stamina!"
+    FadeIn: 0
+    Stay: 1200
+    FadeOut: 0
 
   # Debug mode will print additional information to the console.
   DebugMode: false

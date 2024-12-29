@@ -3,6 +3,7 @@ package com.teenkung.devmmo.Modules;
 import com.teenkung.devmmo.DevMMO;
 import com.teenkung.devmmo.Utils.PlayerDamage;
 import io.lumine.mythic.bukkit.MythicBukkit;
+import io.lumine.mythic.bukkit.events.MythicMobDeathEvent;
 import io.lumine.mythic.bukkit.events.MythicMobDespawnEvent;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -13,16 +14,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Tracks how much damage each player deals to MythicMobs.
- * Other modules (like MobXPModule or EXPShareModule) can retrieve this map
- * to calculate how XP is awarded.
- */
 public class DamageTracker implements Listener {
 
     private final DevMMO plugin;
     private final Map<UUID, PlayerDamage> damages = new HashMap<>();
 
+    /**
+     * Tracks how much damage each player deals to a MythicMob.
+     *
+     * @param plugin The DevMMO plugin instance.
+     */
     public DamageTracker(DevMMO plugin) {
         this.plugin = plugin;
         if (plugin.getConfigLoader().isModuleEnabled("DamageTracker")) {
@@ -30,6 +31,11 @@ public class DamageTracker implements Listener {
         }
     }
 
+    /**
+     * Tracks how much damage each player deals to a MythicMob.
+     *
+     * @param event The EntityDamageByEntityEvent fired by Bukkit.
+     */
     @EventHandler
     public void onDamage(EntityDamageByEntityEvent event) {
         if (!plugin.getConfigLoader().isModuleEnabled("DamageTracker")) return;
@@ -42,12 +48,33 @@ public class DamageTracker implements Listener {
         damages.put(event.getEntity().getUniqueId(), damageRecord);
     }
 
+    /**
+     * Clears the damage record for a MythicMob when it despawns.
+     *
+     * @param event The MythicMobDespawnEvent fired by MythicMobs.
+     */
     @EventHandler
     public void onDespawn(MythicMobDespawnEvent event) {
         if (!plugin.getConfigLoader().isModuleEnabled("DamageTracker")) return;
         damages.remove(event.getEntity().getUniqueId());
     }
 
+    /**
+     * Clears the damage record for a MythicMob when it dies.
+     *
+     * @param event The MythicMobDeathEvent fired by MythicMobs.
+     */
+    @EventHandler
+    public void onDeath(MythicMobDeathEvent event) {
+        if (!plugin.getConfigLoader().isModuleEnabled("DamageTracker")) return;
+        damages.remove(event.getMob().getUniqueId());
+    }
+
+    /**
+     * Gets the damage records for all MythicMobs.
+     *
+     * @return A map of MythicMob UUIDs to their damage records.
+     */
     public Map<UUID, PlayerDamage> getDamages() {
         return damages;
     }

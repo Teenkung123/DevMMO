@@ -6,7 +6,7 @@ depend:
   - MythicMobs
   - MythicLib
   - MMOCore
-  - Worldguard
+  - WorldGuard
 commands:
   spawn-mythicmobs:
     aliases:

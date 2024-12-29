@@ -29,6 +29,9 @@ public class ConfigLoader {
         loadAllConfigs();
     }
 
+    /**
+     * Loads all configuration files.
+     */
     private void loadAllConfigs() {
         // modules.yml
         modulesConfig = loadConfig("modules.yml");
@@ -44,7 +47,9 @@ public class ConfigLoader {
     }
 
     /**
-     * Helper method to load or create a config file.
+     * Loads a configuration file from the plugin's data folder.
+     * @param filename The name of the file to load.
+     * @return The loaded FileConfiguration, or null if an error occurred.
      */
     private FileConfiguration loadConfig(String filename) {
         File file = new File(plugin.getDataFolder(), filename);
@@ -77,43 +82,71 @@ public class ConfigLoader {
             return YamlConfiguration.loadConfiguration(file);
         } catch (IOException e) {
             plugin.getLogger().severe("Could not load configuration file " + filename);
-            e.printStackTrace();
             return null;
         }
     }
 
     /**
-     * Example method to see if a module is enabled from modules.yml.
+     * Check if a module is enabled in the modules.yml configuration.
+     * @param moduleName The name of the module to check.
+     * @return True if the module is enabled, false otherwise.
      */
     public boolean isModuleEnabled(String moduleName) {
         return modulesConfig.getBoolean(moduleName + ".Enabled", false);
     }
 
-    // GETTERS for each module's config
+    /**
+     * Gets the FileConfiguration for HealthModule.
+     * @return The HealthModule configuration.
+     */
     public Configuration getHealthConfig() {
         return healthConfig;
     }
 
+    /**
+     * Gets the FileConfiguration for StaminaModule.
+     * @return The StaminaModule configuration.
+     */
     public Configuration getStaminaConfig() {
         return staminaConfig;
     }
 
+    /**
+     * Gets the FileConfiguration for FireworkBlocker.
+     * @return The FireworkBlocker configuration.
+     */
     public Configuration getFireworkBlockerConfig() {
         return fireworkBlockerConfig;
     }
 
+    /**
+     * Gets the FileConfiguration for DamageTracker.
+     * @return The DamageTracker configuration.
+     */
     public Configuration getDamageTrackerConfig() {
         return damageTrackerConfig;
     }
 
+    /**
+     * Gets the FileConfiguration for MobXPModule.
+     * @return The MobXPModule configuration.
+     */
     public Configuration getMobXPConfig() {
         return mobXPConfig;
     }
 
+    /**
+     * Gets the FileConfiguration for EXPShareModule.
+     * @return The EXPShareModule configuration.
+     */
     public Configuration getExpShareConfig() {
         return expShareConfig;
     }
 
+    /**
+     * Gets the FileConfiguration for RegionLevelModule.
+     * @return The RegionLevelModule configuration.
+     */
     public Configuration getRegionLevelConfig() {
         return regionLevelConfig;
     }

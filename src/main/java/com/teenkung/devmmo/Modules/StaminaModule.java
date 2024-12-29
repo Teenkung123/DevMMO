@@ -85,8 +85,8 @@ public class StaminaModule implements Listener {
     }
 
     /**
-     * Example method for creating a repeating task which drains stamina while sprinting.
-     * You can call this from onEnable or onPlayerJoin, etc.
+     * Adds a task to drain stamina from a player while sprinting.
+     * @param player The player to drain stamina from.
      */
     public void addSprintTaskPlayer(Player player) {
         if (!plugin.getConfigLoader().isModuleEnabled("StaminaModule")) {
@@ -103,7 +103,7 @@ public class StaminaModule implements Listener {
 
                 // Decrease stamina
                 double d = -decreaseAmount;
-                data.giveStamina(d, PlayerResourceUpdateEvent.UpdateReason.SKILL_COST);
+                data.giveStamina(d, PlayerResourceUpdateEvent.UpdateReason.OTHER);
 
                 if (debugMode) {
                     player.showTitle(Title.title(
@@ -155,8 +155,15 @@ public class StaminaModule implements Listener {
         sprintTasks.clear();
     }
 
+    /**
+     * Cancels stamina regeneration if player is running.
+     * @param event The event to handle.
+     */
     @EventHandler
     public void onResourceUpdate(PlayerResourceUpdateEvent event) {
+        if (!plugin.getConfigLoader().isModuleEnabled("StaminaModule")) {
+            return;
+        }
         if (event.getResource() != PlayerResource.STAMINA) {
             return;
         }
@@ -169,6 +176,11 @@ public class StaminaModule implements Listener {
         if (debugMode) player.sendMessage("Stamina Regeneration: Not Canceled | " +  + event.getAmount() + " | " + event.getReason());
     }
 
+    /**
+     * Checks if the player is running.
+     * @param player The player to check.
+     * @return True if the player is running, false otherwise.
+     */
     private boolean isRunning(Player player) {
         return (player.isSprinting() && !player.isSneaking() && !player.isFlying() && player.getGameMode() != GameMode.CREATIVE && player.getGameMode() != GameMode.SPECTATOR);
     }

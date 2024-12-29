@@ -52,7 +52,7 @@ public class DevMMO extends JavaPlugin {
         this.staminaModule = new StaminaModule(this);
         this.fireworkBlocker = new FireworkBlocker(this);
         this.damageTracker = new DamageTracker(this);
-        this.mobXPModule = new MobXPModule(this, damageTracker);
+        this.mobXPModule = new MobXPModule(this);
         this.expShareModule = new EXPShareModule(this, mobXPModule);
         this.regionLevelModule = new RegionLevelModule(this);
 

@@ -59,6 +59,9 @@ public class RegionLevelModule implements Listener {
         return record.getCumulativeMap().ceilingEntry(rand).getValue();
     }
 
+    /**
+     * Load the RegionLevel config.
+     */
     public void loadRegionLevelConfig() {
         ConfigurationSection config = plugin.getConfigLoader().getRegionLevelConfig().getConfigurationSection("RegionLevel");
         if (config == null) {

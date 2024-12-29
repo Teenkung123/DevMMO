@@ -12,7 +12,12 @@ import org.bukkit.World;
 
 public class WorldGuardUtils {
 
-
+    /**
+     * Check if a location is within a WorldGuard region.
+     * @param location The location to check.
+     * @param regionName The name of the region to check.
+     * @return True if the location is within the region, false otherwise.
+     */
     public static boolean isInRegion(Location location, String regionName) {
 
         // Get the world object

@@ -1,5 +1,0 @@
-DamageTracker:
-  # Usually no extra parameters are needed for just tracking damage,
-  # but if you wanted to add something like a time-to-live for unclaimed damage records,
-  # or a debug mode, it could go here.
-  DebugMode: false

@@ -33,7 +33,7 @@ public class MainCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             long start = System.currentTimeMillis();
-            plugin.loadAll();
+            plugin.reloadAll();
             sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>DevMMO reloaded in <gold>" + (System.currentTimeMillis() - start) + "ms<green>."));
             return true;
         }

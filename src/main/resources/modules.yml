@@ -7,9 +7,6 @@ StaminaModule:
 FireworkBlocker:
   Enabled: false
 
-DamageTracker:
-  Enabled: false
-
 MobXPModule:
   Enabled: false
 

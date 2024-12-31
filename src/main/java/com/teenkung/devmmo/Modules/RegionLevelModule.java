@@ -17,7 +17,6 @@ public class RegionLevelModule implements Listener {
 
     private final DevMMO plugin;
     private final Map<String, RegionLevelRecord> regionLevelRecords = new HashMap<>();
-    private boolean debugMode = false;
 
     public RegionLevelModule(DevMMO plugin) {
         this.plugin = plugin;
@@ -30,24 +29,41 @@ public class RegionLevelModule implements Listener {
     @EventHandler
     public void onSpawn(MythicMobSpawnEvent event) {
         Location location = event.getLocation();
+        // Grab the mobType from the event
+        String mobType = event.getMob().getMobType();
+
         for (Map.Entry<String, RegionLevelRecord> entry : regionLevelRecords.entrySet()) {
             String region = entry.getKey();
-            RegionLevelRecord record = entry.getValue();
+            RegionLevelRecord regionRecord = entry.getValue();
+
+            // Check if the location is inside this region
             if (WorldGuardUtils.isInRegion(location, region)) {
-                event.setMobLevel(getWeightedLevel(record));
+                // Check for a custom record for this specific mobType
+                RegionLevelRecord customRecord = regionRecord.getCustomRecords().get(mobType);
+
+                // Use custom record if available, otherwise fallback to region record
+                RegionLevelRecord finalRecord = (customRecord != null) ? customRecord : regionRecord;
+
+                // Set the mob’s level based on the weighted random from the final record
+                event.setMobLevel(getWeightedLevel(finalRecord));
+
+                // Optionally rename the mob to show the new level
+                int levelInt = (int) event.getMobLevel();
+                event.getMob().setDisplayName("&aLv.&e" + levelInt + " &r&f" + event.getMob().getDisplayName());
+
+                // A small no-damage grace period
+                event.getMob().getEntity().setNoDamageTicks(1);
+
+                // Break so that we do not process other regions
                 break;
             }
         }
-
-        event.getMob().setDisplayName("&aLv.&e"+Double.valueOf(event.getMobLevel()).intValue()+" &r&f"+event.getMob().getDisplayName());
-        event.getMob().getEntity().setNoDamageTicks(1);
     }
-
 
     /**
      * This method selects a random level based on the weighted chances defined in the record.
      *
-     * @param record The record of the region.
+     * @param record The record of the region (or custom override).
      * @return The level of the mob.
      */
     public int getWeightedLevel(RegionLevelRecord record) {
@@ -69,7 +85,7 @@ public class RegionLevelModule implements Listener {
             return;
         }
 
-        debugMode = config.getBoolean("DebugMode", false);
+        boolean debugMode = config.getBoolean("DebugMode", false);
         if (debugMode) {
             plugin.getLogger().info("Debug Mode enabled for RegionLevelModule!");
         }
@@ -80,73 +96,101 @@ public class RegionLevelModule implements Listener {
             return;
         }
 
-        for (String key : regions.getKeys(false)) {
-            plugin.getLogger().info("Loading Region: " + key);
-            ConfigurationSection weightSection = regions.getConfigurationSection(key + ".Weight");
+        for (String regionKey : regions.getKeys(false)) {
+            plugin.getLogger().info("Loading Region: " + regionKey);
+
+            // Load BaseLevel
+            int baseLevel = regions.getInt(regionKey + ".BaseLevel", 1);
+
+            // Load Weight Section
+            ConfigurationSection weightSection = regions.getConfigurationSection(regionKey + ".Weight");
             if (weightSection == null) {
-                plugin.getLogger().warning("RegionsLevel Regions " + key + " Weight config not found!");
+                plugin.getLogger().warning("Weight config not found for region: " + regionKey);
                 continue;
             }
 
-            List<LevelWeight> weights = new ArrayList<>();
-            double totalWeight = 0.0;
+            // Parse the primary weight definitions
+            List<LevelWeight> regionWeights = parseWeights(weightSection, regionKey);
 
-            for (String level : weightSection.getKeys(false)) {
-                if (level.contains("-")) {
-                    String[] split = level.split("-");
-                    if (split.length != 2) {
-                        plugin.getLogger().warning("Invalid range format for level: " + level + " in region: " + key);
-                        continue;
-                    }
-                    try {
-                        int min = Integer.parseInt(split[0]);
-                        int max = Integer.parseInt(split[1]);
-                        if (min > max) {
-                            plugin.getLogger().warning("Min level greater than max level in range: " + level + " in region: " + key);
-                            continue;
-                        }
-                        double rangeWeight = weightSection.getDouble(level);
-                        if (rangeWeight < 0) {
-                            plugin.getLogger().warning("Negative weight for range: " + level + " in region: " + key);
-                            continue;
-                        }
-                        int rangeSize = max - min + 1;
-                        double perLevelWeight = rangeWeight / rangeSize;
+            // Build the main region record
+            RegionLevelRecord regionRecord = new RegionLevelRecord(regionKey, baseLevel, regionWeights);
 
-                        for (int i = min; i <= max; i++) {
-                            weights.add(new LevelWeight(i, perLevelWeight));
-                            totalWeight += perLevelWeight;
-                        }
-                    } catch (NumberFormatException e) {
-                        plugin.getLogger().warning("Invalid number format in range: " + level + " in region: " + key);
-                    }
-                } else {
-                    try {
-                        int singleLevel = Integer.parseInt(level);
-                        double levelWeight = weightSection.getDouble(level);
-                        if (levelWeight < 0) {
-                            plugin.getLogger().warning("Negative weight for level: " + level + " in region: " + key);
-                            continue;
-                        }
-                        weights.add(new LevelWeight(singleLevel, levelWeight));
-                        totalWeight += levelWeight;
-                    } catch (NumberFormatException e) {
-                        plugin.getLogger().warning("Invalid level number: " + level + " in region: " + key);
+            // Check if there is a Custom section for this region
+            ConfigurationSection customSection = regions.getConfigurationSection(regionKey + ".Custom");
+            if (customSection != null) {
+                for (String mobType : customSection.getKeys(false)) {
+                    plugin.getLogger().info("  Found custom mob config: " + mobType);
+
+                    int customBaseLevel = customSection.getInt(mobType + ".BaseLevel", baseLevel);
+                    ConfigurationSection customWeightSection = customSection.getConfigurationSection(mobType + ".Weight");
+
+                    if (customWeightSection != null) {
+                        List<LevelWeight> customWeights = parseWeights(customWeightSection, mobType);
+                        RegionLevelRecord customRecord = new RegionLevelRecord(mobType, customBaseLevel, customWeights);
+                        regionRecord.getCustomRecords().put(mobType, customRecord);
+                    } else {
+                        plugin.getLogger().warning("  No 'Weight' found for custom mob: " + mobType + " in region: " + regionKey);
                     }
                 }
             }
 
-            if (weights.isEmpty()) {
-                plugin.getLogger().warning("No valid weights found for region: " + key);
-                continue;
-            }
-
-            RegionLevelRecord record = new RegionLevelRecord(key, regions.getInt(key + ".BaseLevel"), weights);
-            regionLevelRecords.put(key, record);
-
-            plugin.getLogger().info("Total Weight for region " + key + ": " + totalWeight);
+            // Store the region record
+            regionLevelRecords.put(regionKey, regionRecord);
         }
+
         plugin.getLogger().info("Region Level Config loaded!");
     }
 
+    /**
+     * Utility method to parse weight entries (either single levels or ranges).
+     */
+    private List<LevelWeight> parseWeights(ConfigurationSection weightSection, String parentKey) {
+        List<LevelWeight> parsedWeights = new ArrayList<>();
+        for (String levelOrRange : weightSection.getKeys(false)) {
+            if (levelOrRange.contains("-")) {
+                // If the config key is a range like "3-10"
+                String[] split = levelOrRange.split("-");
+                if (split.length != 2) {
+                    plugin.getLogger().warning("Invalid range format for: " + levelOrRange + " in: " + parentKey);
+                    continue;
+                }
+                try {
+                    int min = Integer.parseInt(split[0]);
+                    int max = Integer.parseInt(split[1]);
+                    if (min > max) {
+                        plugin.getLogger().warning("Min level greater than max level in range: " + levelOrRange + " in: " + parentKey);
+                        continue;
+                    }
+                    double rangeWeight = weightSection.getDouble(levelOrRange);
+                    if (rangeWeight < 0) {
+                        plugin.getLogger().warning("Negative weight for range: " + levelOrRange + " in: " + parentKey);
+                        continue;
+                    }
+                    // Split the weight evenly across all levels in the range
+                    int rangeSize = max - min + 1;
+                    double perLevelWeight = rangeWeight / rangeSize;
+
+                    for (int i = min; i <= max; i++) {
+                        parsedWeights.add(new LevelWeight(i, perLevelWeight));
+                    }
+                } catch (NumberFormatException e) {
+                    plugin.getLogger().warning("Invalid number format in range: " + levelOrRange + " in: " + parentKey);
+                }
+            } else {
+                // If the config key is a single level like "2"
+                try {
+                    int singleLevel = Integer.parseInt(levelOrRange);
+                    double levelWeight = weightSection.getDouble(levelOrRange);
+                    if (levelWeight < 0) {
+                        plugin.getLogger().warning("Negative weight for level: " + levelOrRange + " in: " + parentKey);
+                        continue;
+                    }
+                    parsedWeights.add(new LevelWeight(singleLevel, levelWeight));
+                } catch (NumberFormatException e) {
+                    plugin.getLogger().warning("Invalid level number: " + levelOrRange + " in: " + parentKey);
+                }
+            }
+        }
+        return parsedWeights;
+    }
 }

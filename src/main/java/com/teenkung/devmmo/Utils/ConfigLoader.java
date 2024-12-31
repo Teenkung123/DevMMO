@@ -19,7 +19,6 @@ public class ConfigLoader {
     private FileConfiguration healthConfig;
     private FileConfiguration staminaConfig;
     private FileConfiguration fireworkBlockerConfig;
-    private FileConfiguration damageTrackerConfig;
     private FileConfiguration mobXPConfig;
     private FileConfiguration expShareConfig;
     private FileConfiguration regionLevelConfig;
@@ -40,7 +39,6 @@ public class ConfigLoader {
         healthConfig = loadConfig("Modules/HealthModule.yml");
         staminaConfig = loadConfig("Modules/StaminaModule.yml");
         fireworkBlockerConfig = loadConfig("Modules/FireworkBlocker.yml");
-        damageTrackerConfig = loadConfig("Modules/DamageTracker.yml");
         mobXPConfig = loadConfig("Modules/MobXPModule.yml");
         expShareConfig = loadConfig("Modules/EXPShareModule.yml");
         regionLevelConfig = loadConfig("Modules/RegionLevelModule.yml");
@@ -117,14 +115,6 @@ public class ConfigLoader {
      */
     public Configuration getFireworkBlockerConfig() {
         return fireworkBlockerConfig;
-    }
-
-    /**
-     * Gets the FileConfiguration for DamageTracker.
-     * @return The DamageTracker configuration.
-     */
-    public Configuration getDamageTrackerConfig() {
-        return damageTrackerConfig;
     }
 
     /**

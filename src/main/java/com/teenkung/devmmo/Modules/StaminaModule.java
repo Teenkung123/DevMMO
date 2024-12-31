@@ -12,6 +12,7 @@ import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
@@ -91,6 +92,10 @@ public class StaminaModule implements Listener {
     public void addSprintTaskPlayer(Player player) {
         if (!plugin.getConfigLoader().isModuleEnabled("StaminaModule")) {
             return;
+        }
+
+        if (sprintTasks.containsKey(player)) {
+            sprintTasks.get(player).cancel();
         }
 
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
@@ -173,7 +178,7 @@ public class StaminaModule implements Listener {
             event.setCancelled(true);
             return;
         }
-        if (debugMode) player.sendMessage("Stamina Regeneration: Not Canceled | " +  + event.getAmount() + " | " + event.getReason());
+        if (debugMode) player.sendMessage("Stamina Regeneration: Not Canceled | " + event.getAmount() + " | " + event.getReason());
     }
 
     /**
@@ -183,5 +188,10 @@ public class StaminaModule implements Listener {
      */
     private boolean isRunning(Player player) {
         return (player.isSprinting() && !player.isSneaking() && !player.isFlying() && player.getGameMode() != GameMode.CREATIVE && player.getGameMode() != GameMode.SPECTATOR);
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        addSprintTaskPlayer(event.getPlayer());
     }
 }

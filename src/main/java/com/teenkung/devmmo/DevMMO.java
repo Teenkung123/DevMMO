@@ -44,22 +44,17 @@ public class DevMMO extends JavaPlugin {
      * Loads (or reloads) all configurations and modules.
      */
     public void loadAll() {
-        // 1. Load config(s)
         this.configLoader = new ConfigLoader(this);
 
-        // 2. Instantiate modules
         this.healthModule = new HealthModule(this);
         this.staminaModule = new StaminaModule(this);
         this.fireworkBlocker = new FireworkBlocker(this);
         this.damageTracker = new DamageTracker(this);
         this.mobXPModule = new MobXPModule(this);
-        this.expShareModule = new EXPShareModule(this, mobXPModule);
+        this.expShareModule = new EXPShareModule(this);
         this.regionLevelModule = new RegionLevelModule(this);
 
-        // If your stamina module, for example, creates sprint tasks for each online player:
-        getServer().getOnlinePlayers().forEach(player -> {
-            staminaModule.addSprintTaskPlayer(player);
-        });
+        getServer().getOnlinePlayers().forEach(player -> staminaModule.addSprintTaskPlayer(player));
     }
 
     /**
@@ -67,7 +62,7 @@ public class DevMMO extends JavaPlugin {
      * if you need to re-load modules without fully unloading the plugin.
      */
     public void unloadAll() {
-        HandlerList.unregisterAll(this);
+        staminaModule.shutdown();
         HandlerList.unregisterAll(healthModule);
         HandlerList.unregisterAll(staminaModule);
         HandlerList.unregisterAll(fireworkBlocker);
@@ -75,7 +70,7 @@ public class DevMMO extends JavaPlugin {
         HandlerList.unregisterAll(mobXPModule);
         HandlerList.unregisterAll(expShareModule);
         HandlerList.unregisterAll(regionLevelModule);
-        staminaModule.shutdown();
+        HandlerList.unregisterAll(this);
     }
 
     /**
@@ -85,17 +80,44 @@ public class DevMMO extends JavaPlugin {
      * - Re-instantiate modules
      */
     public void reloadAll() {
-        // 1. Unload existing modules
         unloadAll();
 
-        // 2. loadAll() again
         loadAll();
 
-        // 3. Possibly send a message to console or user
         getLogger().info("DevMMO has been reloaded!");
     }
 
     public ConfigLoader getConfigLoader() {
         return configLoader;
     }
+
+    public HealthModule getHealthModule() {
+        return healthModule;
+    }
+
+    public StaminaModule getStaminaModule() {
+        return staminaModule;
+    }
+
+    public FireworkBlocker getFireworkBlocker() {
+        return fireworkBlocker;
+    }
+
+    public DamageTracker getDamageTracker() {
+        return damageTracker;
+    }
+
+    public MobXPModule getMobXPModule() {
+        return mobXPModule;
+    }
+
+    public EXPShareModule getExpShareModule() {
+        return expShareModule;
+    }
+
+    public RegionLevelModule getRegionLevelModule() {
+        return regionLevelModule;
+    }
+
+
 }

@@ -135,7 +135,7 @@ public class StaminaModule implements Listener {
                 }
                 if (data.getStamina() <= exhaustedThreshold) {
                     player.addPotionEffect(new PotionEffect(
-                            PotionEffectType.SLOWNESS,
+                            PotionEffectType.SLOW,
                             slownessDuration,
                             slownessLevel,
                             true,

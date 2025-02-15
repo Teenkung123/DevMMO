@@ -1,0 +1,3 @@
+SpawnerLimiter:
+  Limit: 2
+  Message: "<red>You cannot place more than 2 spawners in this chunk!"

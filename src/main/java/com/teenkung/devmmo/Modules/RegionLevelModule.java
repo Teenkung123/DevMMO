@@ -7,6 +7,7 @@ import com.teenkung.devmmo.Utils.WorldGuardUtils;
 import io.lumine.mythic.bukkit.events.MythicMobSpawnEvent;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Silverfish;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
@@ -46,15 +47,14 @@ public class RegionLevelModule implements Listener {
 
                 // Set the mob’s level based on the weighted random from the final record
                 event.setMobLevel(getWeightedLevel(finalRecord));
-
-                // Optionally rename the mob to show the new level
-                int levelInt = (int) event.getMobLevel();
-                event.getMob().setDisplayName("&aLv.&e" + levelInt + " &r&f" + event.getMob().getDisplayName());
-
-                // A small no-damage grace period
                 event.getMob().getEntity().setNoDamageTicks(1);
-
-                // Break so that we do not process other regions
+                if (event.getMob().getDisplayName() != null && !event.getMob().getDisplayName().isEmpty() && !event.getMob().getDisplayName().isBlank() && !event.getMob().getDisplayName().equalsIgnoreCase("silverfish")) {
+                    if (event.getMob().getEntity().getBukkitEntity() instanceof Silverfish) {
+                        break;
+                    }
+                    int levelInt = (int) event.getMobLevel();
+                    event.getMob().setDisplayName("&aLv.&e" + levelInt + " &r&f" + event.getMob().getDisplayName());
+                }
                 break;
             }
         }

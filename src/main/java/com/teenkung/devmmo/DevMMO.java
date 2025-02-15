@@ -3,6 +3,7 @@ package com.teenkung.devmmo;
 import com.teenkung.devmmo.Commands.MainCommand.MainCommand;
 import com.teenkung.devmmo.Commands.SpawnMythicMobs.SpawnMythicMobs;
 import com.teenkung.devmmo.Commands.SpawnMythicMobs.SpawnMythicMobsTab;
+import com.teenkung.devmmo.Developcraft.Developcraft;
 import com.teenkung.devmmo.Modules.*;
 import com.teenkung.devmmo.Utils.ConfigLoader;
 import org.bukkit.event.HandlerList;
@@ -14,6 +15,7 @@ import java.util.Objects;
 public class DevMMO extends JavaPlugin {
 
     private ConfigLoader configLoader;
+    private Developcraft developcraft;
 
     // Module references
     private HealthModule healthModule;
@@ -26,9 +28,9 @@ public class DevMMO extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // Initial load
-        loadAll();
+        this.developcraft = new Developcraft(this);
 
+        loadAll();
         Objects.requireNonNull(getCommand("spawn-mythicmobs")).setExecutor(new SpawnMythicMobs());
         Objects.requireNonNull(getCommand("spawn-mythicmobs")).setTabCompleter(new SpawnMythicMobsTab());
         new MainCommand(this);
@@ -38,6 +40,7 @@ public class DevMMO extends JavaPlugin {
     public void onDisable() {
         // If you have any cleanup, do it here
         unloadAll();
+        developcraft.unloadAll();
     }
 
     /**
@@ -54,6 +57,8 @@ public class DevMMO extends JavaPlugin {
         this.expShareModule = new EXPShareModule(this);
         this.regionLevelModule = new RegionLevelModule(this);
 
+        developcraft.loadAll();
+
         getServer().getOnlinePlayers().forEach(player -> staminaModule.addSprintTaskPlayer(player));
     }
 
@@ -62,6 +67,7 @@ public class DevMMO extends JavaPlugin {
      * if you need to re-load modules without fully unloading the plugin.
      */
     public void unloadAll() {
+        developcraft.unloadAll();
         staminaModule.shutdown();
         HandlerList.unregisterAll(healthModule);
         HandlerList.unregisterAll(staminaModule);

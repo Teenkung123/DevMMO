@@ -1,0 +1,16 @@
+BossDamageList:
+  KillMessage: "<green>The boss <name> has been defeated.\n<green>Everyone who participated in the fight will receive rewards."
+  Leaderboard: "<gold><place>. <yellow><name> - <red><damage> <white>damage"
+
+  Bosses:
+    ExampleMythicMobId:
+      MinimumDamageThreshold: 100
+      DefaultRewards:
+        - "give <player> diamond 1"
+      Rewards:
+        1:
+          - "give <player> diamond 1"
+          - "give <player> emerald 1"
+        2:
+          - "give <player> diamond 2"
+          - "give <player> emerald 2"

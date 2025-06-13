@@ -25,6 +25,7 @@ public class DevMMO extends JavaPlugin {
     private MobXPModule mobXPModule;
     private EXPShareModule expShareModule;
     private RegionLevelModule regionLevelModule;
+    private BossDamageList bossDamageList;
 
     @Override
     public void onEnable() {
@@ -56,6 +57,7 @@ public class DevMMO extends JavaPlugin {
         this.mobXPModule = new MobXPModule(this);
         this.expShareModule = new EXPShareModule(this);
         this.regionLevelModule = new RegionLevelModule(this);
+        this.bossDamageList = new BossDamageList(this);
 
         developcraft.loadAll();
 
@@ -76,6 +78,7 @@ public class DevMMO extends JavaPlugin {
         HandlerList.unregisterAll(mobXPModule);
         HandlerList.unregisterAll(expShareModule);
         HandlerList.unregisterAll(regionLevelModule);
+        HandlerList.unregisterAll(bossDamageList);
         HandlerList.unregisterAll(this);
     }
 
@@ -125,5 +128,6 @@ public class DevMMO extends JavaPlugin {
         return regionLevelModule;
     }
 
+    public BossDamageList getBossDamageList() { return bossDamageList; }
 
 }

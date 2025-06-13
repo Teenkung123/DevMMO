@@ -15,3 +15,6 @@ EXPShareModule:
 
 RegionLevel:
   Enabled: false
+
+BossDamageList:
+  Enabled: false

@@ -13,13 +13,12 @@ import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.entity.Player;
 
 import java.text.DecimalFormat;
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,8 +30,12 @@ public class MobXPModule implements Listener {
 
     private final DevMMO plugin;
     private final DecimalFormat df = new DecimalFormat("#.##");
-    private final Map<Integer, Double> cahceEXP = new HashMap<>();
 
+    /* -------------- runtime cache -------------- */
+    private final Map<Integer, Double> cacheEXP = new ConcurrentHashMap<>();
+    private final Map<Player, Double> experienceBuffer = new ConcurrentHashMap<>();
+
+    /* -------------- config values -------------- */
     private long fadeIn;
     private long stay;
     private long fadeOut;
@@ -43,190 +46,162 @@ public class MobXPModule implements Listener {
     private String baseFormula;
     private boolean debugMode;
 
-    private final Map<Player, Double> experienceBuffer = new ConcurrentHashMap<>();
+    /* ------------------------------------------- */
 
     public MobXPModule(DevMMO plugin) {
         this.plugin = plugin;
-        fadeIn = plugin.getConfigLoader().getMobXPConfig().getLong("MobXPModule.TitleFadeIn", 3);
-        stay = plugin.getConfigLoader().getMobXPConfig().getLong("MobXPModule.TitleStay", 10);
-        fadeOut = plugin.getConfigLoader().getMobXPConfig().getLong("MobXPModule.TitleFadeOut", 3);
-        titleMessage = plugin.getConfigLoader().getMobXPConfig().getString("MobXPModule.TitleMessage", "<yellow>+{exp}<green> EXP!");
-        soundName = plugin.getConfigLoader().getMobXPConfig().getString("MobXPModule.AwardSound", "BLOCK_NOTE_BLOCK_BELL");
-        volume = (float) plugin.getConfigLoader().getMobXPConfig().getDouble("MobXPModule.SoundVolume", 1.0);
-        pitch = (float) plugin.getConfigLoader().getMobXPConfig().getDouble("MobXPModule.SoundPitch", 1.2);
-        baseFormula = plugin.getConfigLoader().getMobXPConfig().getString("MobXPModule.BaseFormula", "10 * level");
 
-        if (plugin.getConfigLoader().isModuleEnabled("MobXPModule")) {
+        var cfg = plugin.getConfigLoader().getMobXPConfig();
+        fadeIn       = cfg.getLong("MobXPModule.TitleFadeIn", 150);
+        stay         = cfg.getLong("MobXPModule.TitleStay", 500);
+        fadeOut      = cfg.getLong("MobXPModule.TitleFadeOut", 150);
+        titleMessage = cfg.getString("MobXPModule.TitleMessage", "<yellow>+{exp}<green> EXP!");
+        soundName    = cfg.getString("MobXPModule.AwardSound", "BLOCK_NOTE_BLOCK_BELL");
+        volume       = (float) cfg.getDouble("MobXPModule.SoundVolume", 1.0);
+        pitch        = (float) cfg.getDouble("MobXPModule.SoundPitch", 1.2);
+        baseFormula  = cfg.getString("MobXPModule.BaseFormula", "30 + (0.4 * (level ^ 2.25))");
+
+        if (plugin.getConfigLoader().isModuleEnabled("MobXPModule"))
             plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        }
-        if (plugin.getConfigLoader().isModuleEnabled("EXPShareModule")) {
-            plugin.getLogger().info("[MobXPModule] EXPShareModule is enabled. This will disable default EXP rewards of this module to prevent double rewards.");
-        }
 
+        if (plugin.getConfigLoader().isModuleEnabled("EXPShareModule"))
+            plugin.getLogger().info("[MobXPModule] EXPShareModule is enabled. Default kill-XP is disabled to avoid double rewards.");
+
+        /* Verify the configured formula once at startup. */
+        try {
+            new ExpressionBuilder(baseFormula.replace("{level}", "level"))
+                    .variables("level")
+                    .build()
+                    .setVariable("level", 1)
+                    .evaluate();
+        } catch (Exception ex) {
+            plugin.getLogger().severe("[MobXPModule] Invalid BaseFormula in MobXPModule.yml: " + ex.getMessage());
+            plugin.getServer().getPluginManager().disablePlugin(plugin);
+        }
     }
 
-    /**
-     * Awards experience to a player when they kill a MythicMob.
-     * @param event The MythicMobDeathEvent fired by MythicMobs.
-     */
+    /* ------------------------------------------------------------------------ */
+    /*  Main event: Mythic mob death                                            */
+    /* ------------------------------------------------------------------------ */
+
     @EventHandler
     public void onMythicMobDeath(MythicMobDeathEvent event) {
         if (!plugin.getConfigLoader().isModuleEnabled("MobXPModule")) return;
         if (plugin.getConfigLoader().isModuleEnabled("EXPShareModule")) return;
 
-        // Retrieve damage info from DamageTracker
         ActiveMob mob = event.getMob();
+        double rawLevel = mob.getLevel();
 
-        // Evaluate the mob's level
-        int mobLevel = (int) mob.getLevel();
+        /* Guard against missing / NaN / negative levels. */
+        if (!Double.isFinite(rawLevel) || rawLevel < 0)
+            rawLevel = 0;
+
+        int level = (int) Math.round(rawLevel);
 
         if (event.getKiller() instanceof Player player) {
-            rewardExperience(player, calculateExpression(baseFormula, mobLevel));
+            double xp = getExperienceGain(level);
+            rewardExperience(player, xp);
         }
     }
 
-    /**
-     * Buffers experience gained by a player.
-     * to be displayed in a title message.
-     * @param event The PlayerExperienceGainEvent fired by MMOCore.
-     */
+    /* ------------------------------------------------------------------------ */
+    /*  Buffer & title display for *all* XP gains (MMOCore event)               */
+    /* ------------------------------------------------------------------------ */
+
     @EventHandler
     public void onExperienceGain(PlayerExperienceGainEvent event) {
-        if (event.getProfession() != null) return;
+        if (event.getProfession() != null) return; // ignore profession XP
+
         Player player = event.getPlayer();
-        double exp = event.getExperience();
+        double exp    = event.getExperience();
+
         experienceBuffer.merge(player, exp, Double::sum);
+
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            double total = experienceBuffer.getOrDefault(player, 0.0);
-            if (total <= 0) return;
-            String str = df.format(total);
-            player.showTitle(Title.title(Component.empty(), MiniMessage.miniMessage().deserialize(titleMessage.replace("{exp}", str)), Title.Times.times(Duration.ofMillis(fadeIn), Duration.ofMillis(stay), Duration.ofMillis(fadeOut))));
+            Double totalObj = experienceBuffer.remove(player); // may be null
+            if (totalObj == null || totalObj <= 0) return;
+
+            double total = totalObj;   // now safely unboxed
+            String formatted = df.format(total);
+
+            player.showTitle(Title.title(
+                    Component.empty(),
+                    MiniMessage.miniMessage().deserialize(titleMessage.replace("{exp}", formatted)),
+                    Title.Times.times(Duration.ofMillis(fadeIn), Duration.ofMillis(stay), Duration.ofMillis(fadeOut))
+            ));
             player.playSound(player.getLocation(), Sound.valueOf(soundName), volume, pitch);
-            experienceBuffer.remove(player);
         }, 3L);
     }
 
-    /**
-     * Rewards a player with experience.
-     * @param player The player to reward.
-     * @param xp The amount of experience to reward.
-     */
+    /* ------------------------------------------------------------------------ */
+    /*  Helpers                                                                 */
+    /* ------------------------------------------------------------------------ */
+
+    /** Grant XP safely; never allow NaN or negative values to reach MMOCore. */
     public void rewardExperience(Player player, double xp) {
-        PlayerData data = PlayerData.get(player);
-        data.giveExperience(xp, EXPSource.VANILLA);
-    }
-
-    public double getExperienceGain(int level) {
-        return calculateExpression(baseFormula, level);
-    }
-
-    /**
-     * Calculates the amount of experience a player should receive for killing a MythicMob.
-     * @param formula The formula to use for calculating experience.
-     * @param level The level of the mob.
-     * @return The amount of experience to award.
-     */
-    private double calculateExpression(String formula, int level) {
-        if (cahceEXP.containsKey(level)) {
-            return cahceEXP.get(level);
+        if (!Double.isFinite(xp) || xp <= 0) {
+            if (debugMode)
+                plugin.getLogger().warning("[MobXPModule] Skipped invalid XP value (" + xp + ") for " + player.getName());
+            return;
         }
-        try {
-            formula = formula.replace("{level}", "level");
+        PlayerData.get(player).giveExperience(xp, EXPSource.VANILLA);
+    }
 
-            Expression expression = new ExpressionBuilder(formula)
+    /** Public for other modules / admin commands. */
+    public double getExperienceGain(int level) {
+        return calculateExpression(level);
+    }
+
+    private double calculateExpression(int level) {
+        /* Cached? */
+        Double cached = cacheEXP.get(level);
+        if (cached != null) return cached;
+
+        String exprString = baseFormula.replace("{level}", "level");
+
+        double result;
+        try {
+            Expression expr = new ExpressionBuilder(exprString)
                     .variables("level")
                     .build()
                     .setVariable("level", level);
-            double exp = expression.evaluate();
-            cahceEXP.put(level, exp);
-            return exp;
+            result = expr.evaluate();
         } catch (Exception ex) {
-            plugin.getLogger().severe("Error evaluating formula: " + formula);
-            return 0;
+            plugin.getLogger().severe("[MobXPModule] Error evaluating formula \"" +
+                    baseFormula + "\" with level " + level + ": " + ex.getMessage());
+            result = 0;
         }
+
+        /* Final guard – never return NaN, ∞, or negative. */
+        if (!Double.isFinite(result) || result < 0) {
+            if (debugMode)
+                plugin.getLogger().warning("[MobXPModule] Formula produced invalid value (" +
+                        result + ") for level " + level + ". Using 0.");
+            result = 0;
+        }
+
+        cacheEXP.put(level, result);
+        return result;
     }
 
-    /**
-     * Returns the debug mode status.
-     * @return The debug mode status.
-     */
-    public boolean isDebugMode() {
-        return debugMode;
-    }
+    /* ------------------------------------------------------------------------ */
+    /*  Fluent setters for runtime tweaking / admin commands                    */
+    /* ------------------------------------------------------------------------ */
 
-    /**
-     * Sets the debug mode status.
-     * @param debugMode The debug mode status.
-     */
-    public void setDebugMode(boolean debugMode) {
-        this.debugMode = debugMode;
-    }
+    public boolean isDebugMode()                  { return debugMode; }
+    public void setDebugMode(boolean debugMode)   { this.debugMode = debugMode; }
 
-    /**
-     * Sets the base formula for calculating experience.
-     * @param baseFormula The base formula for calculating experience.
-     */
     public void setBaseFormula(String baseFormula) {
         this.baseFormula = baseFormula;
-        this.cahceEXP.clear();
+        cacheEXP.clear();
     }
 
-    /**
-     * Sets the title message for the experience reward.
-     * @param titleMessage The title message for the experience reward.
-     */
-    public void setTitleMessage(String titleMessage) {
-        this.titleMessage = titleMessage;
-    }
+    public void setTitleMessage(String titleMessage) { this.titleMessage = titleMessage; }
+    public void setSoundName(String soundName)       { this.soundName = soundName; }
+    public void setVolume(float volume)             { this.volume = volume; }
+    public void setPitch(float pitch)               { this.pitch = pitch; }
 
-    /**
-     * Sets the sound name for the experience reward.
-     * @param soundName The sound name for the experience reward.
-     */
-    public void setSoundName(String soundName) {
-        this.soundName = soundName;
-    }
-
-    /**
-     * Sets the volume for the experience reward.
-     * @param volume The volume for the experience reward.
-     */
-    public void setVolume(float volume) {
-        this.volume = volume;
-    }
-
-    /**
-     * Sets the pitch for the experience reward.
-     * @param pitch The pitch for the experience reward.
-     */
-    public void setPitch(float pitch) {
-        this.pitch = pitch;
-    }
-
-    /**
-     * Sets the fade in time for the experience reward.
-     * @param fadeIn The fade in time for the experience reward.
-     */
-    public void setFadeIn(long fadeIn) {
-        this.fadeIn = fadeIn;
-    }
-
-    /**
-     * Sets the stay time for the experience reward.
-     * @param stay The stay time for the experience reward.
-     */
-    public void setStay(long stay) {
-        this.stay = stay;
-    }
-
-    /**
-     * Sets the fade out time for the experience reward.
-     * @param fadeOut The fade out time for the experience reward.
-     */
-    public void setFadeOut(long fadeOut) {
-        this.fadeOut = fadeOut;
-    }
-
-
-
+    public void setFadeIn(long fadeIn)   { this.fadeIn = fadeIn; }
+    public void setStay(long stay)       { this.stay   = stay;   }
+    public void setFadeOut(long fadeOut) { this.fadeOut = fadeOut; }
 }

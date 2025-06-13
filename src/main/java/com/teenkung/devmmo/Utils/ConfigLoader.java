@@ -22,6 +22,7 @@ public class ConfigLoader {
     private FileConfiguration mobXPConfig;
     private FileConfiguration expShareConfig;
     private FileConfiguration regionLevelConfig;
+    private FileConfiguration bossDamageListConfig;
 
     public ConfigLoader(DevMMO plugin) {
         this.plugin = plugin;
@@ -42,6 +43,7 @@ public class ConfigLoader {
         mobXPConfig = loadConfig("Modules/MobXPModule.yml");
         expShareConfig = loadConfig("Modules/EXPShareModule.yml");
         regionLevelConfig = loadConfig("Modules/RegionLevelModule.yml");
+        bossDamageListConfig = loadConfig("Modules/BossDamageList.yml");
     }
 
     /**
@@ -139,5 +141,13 @@ public class ConfigLoader {
      */
     public Configuration getRegionLevelConfig() {
         return regionLevelConfig;
+    }
+
+    /**
+     * Gets the FileConfiguration for BossDamageListModule.
+     * @return The BossDamageListModule configuration.
+     */
+    public Configuration getBossDamageListConfig() {
+        return bossDamageListConfig;
     }
 }

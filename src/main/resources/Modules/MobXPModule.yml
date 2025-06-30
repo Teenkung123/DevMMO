@@ -1,9 +1,10 @@
 # MobXPModule.yml
 MobXPModule:
-  # A mathematical expression for the base XP.
-  # We'll do something like "30 + (0.4 * ({level} ^ 2.25))"
-  # to emulate your original formula. But you can change it freely.
-  BaseFormula: "30 + (0.4 * ({level} ^ 2.25))"
+  Formulas:
+    default: "30 + (0.4 * ({level} ^ 2.25))"
+    world: "30 + (0.4 * ({level} ^ 2.25))"
+
+  Blacklist: []
 
   # Title display configuration (time in milliseconds)
   TitleFadeIn: 150

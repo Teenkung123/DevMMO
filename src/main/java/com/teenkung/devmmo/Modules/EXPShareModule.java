@@ -63,7 +63,8 @@ public class EXPShareModule implements Listener {
             if (player == null) continue;
             if (!player.isOnline()) continue;
             double percentage = damageRecord.getDamage(uuid) / damageRecord.getTotalDamage();
-            double xpGain = mobXPModule.getExperienceGain(Double.valueOf(event.getMob().getLevel()).intValue()) * percentage;
+            String world = event.getEntity().getWorld().getName();
+            double xpGain = mobXPModule.getExperienceGain(Double.valueOf(event.getMob().getLevel()).intValue(), world) * percentage;
             mobXPModule.rewardExperience(Bukkit.getPlayer(uuid), xpGain);
             if (debugMode) {
                 plugin.getLogger().info("[EXPShareModule] " + player.getName() + " gained " + xpGain + " EXP from " + event.getMob().getUniqueId());

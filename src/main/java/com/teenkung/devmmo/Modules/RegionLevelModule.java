@@ -18,6 +18,7 @@ public class RegionLevelModule implements Listener {
 
     private final DevMMO plugin;
     private final Map<String, RegionLevelRecord> regionLevelRecords = new HashMap<>();
+    private final Map<String, String> mobNameFormats = new HashMap<>();
 
     public RegionLevelModule(DevMMO plugin) {
         this.plugin = plugin;
@@ -31,7 +32,10 @@ public class RegionLevelModule implements Listener {
     public void onSpawn(MythicMobSpawnEvent event) {
         Location location = event.getLocation();
         // Grab the mobType from the event
-        String mobType = event.getMob().getMobType();
+        String mobType = getMythicMobType(event.getEntity());
+        if (mobType == null) {
+            mobType = event.getMob().getMobType();
+        }
 
         for (Map.Entry<String, RegionLevelRecord> entry : regionLevelRecords.entrySet()) {
             String region = entry.getKey();
@@ -53,7 +57,9 @@ public class RegionLevelModule implements Listener {
                         break;
                     }
                     int levelInt = (int) event.getMobLevel();
-                    event.getMob().setDisplayName("&aLv.&e" + levelInt + " &r&f" + event.getMob().getDisplayName());
+                    String template = mobNameFormats.getOrDefault(mobType.toLowerCase(), mobNameFormats.getOrDefault("default", "&aLv.&e<level> &r&f<name>"));
+                    String name = template.replace("<level>", String.valueOf(levelInt)).replace("<name>", event.getMob().getDisplayName());
+                    event.getMob().setDisplayName(name);
                 }
                 break;
             }
@@ -88,6 +94,20 @@ public class RegionLevelModule implements Listener {
         boolean debugMode = config.getBoolean("DebugMode", false);
         if (debugMode) {
             plugin.getLogger().info("Debug Mode enabled for RegionLevelModule!");
+        }
+
+        mobNameFormats.clear();
+        Object nameObj = config.get("MobName");
+        if (nameObj instanceof ConfigurationSection section) {
+            for (String key : section.getKeys(false)) {
+                String fmt = section.getString(key);
+                if (fmt != null) {
+                    mobNameFormats.put(key.toLowerCase(), fmt);
+                }
+            }
+        } else {
+            String def = config.getString("MobName", "&aLv.&e<level> &r&f<name>");
+            mobNameFormats.put("default", def);
         }
 
         ConfigurationSection regions = config.getConfigurationSection("Regions");
@@ -192,5 +212,20 @@ public class RegionLevelModule implements Listener {
             }
         }
         return parsedWeights;
+    }
+
+    /**
+     * Returns the MythicMobs type for the entity if relevant.
+     */
+    private String getMythicMobType(org.bukkit.entity.Entity entity) {
+        try {
+            if (io.lumine.mythic.bukkit.MythicBukkit.inst().getMobManager().isMythicMob(entity)) {
+                return io.lumine.mythic.bukkit.MythicBukkit.inst().getMobManager()
+                        .getMythicMobInstance(entity)
+                        .getMobType();
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 }

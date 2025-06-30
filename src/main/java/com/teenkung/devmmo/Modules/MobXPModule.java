@@ -20,6 +20,7 @@ import org.bukkit.event.Listener;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -32,7 +33,6 @@ public class MobXPModule implements Listener {
     private final DecimalFormat df = new DecimalFormat("#.##");
 
     /* -------------- runtime cache -------------- */
-    private final Map<Integer, Double> cacheEXP = new ConcurrentHashMap<>();
     private final Map<Player, Double> experienceBuffer = new ConcurrentHashMap<>();
 
     /* -------------- config values -------------- */
@@ -44,6 +44,9 @@ public class MobXPModule implements Listener {
     private float volume;
     private float pitch;
     private String baseFormula;
+    private final Map<String, String> formulas = new ConcurrentHashMap<>();
+    private final Map<String, Map<Integer, Double>> worldCache = new ConcurrentHashMap<>();
+    private final java.util.Set<String> blacklist = ConcurrentHashMap.newKeySet();
     private boolean debugMode;
 
     /* ------------------------------------------- */
@@ -59,7 +62,22 @@ public class MobXPModule implements Listener {
         soundName    = cfg.getString("MobXPModule.AwardSound", "BLOCK_NOTE_BLOCK_BELL");
         volume       = (float) cfg.getDouble("MobXPModule.SoundVolume", 1.0);
         pitch        = (float) cfg.getDouble("MobXPModule.SoundPitch", 1.2);
-        baseFormula  = cfg.getString("MobXPModule.BaseFormula", "30 + (0.4 * (level ^ 2.25))");
+
+        var formulasSec = cfg.getConfigurationSection("MobXPModule.Formulas");
+        if (formulasSec != null) {
+            for (String key : formulasSec.getKeys(false)) {
+                String formula = formulasSec.getString(key);
+                if (formula != null) {
+                    formulas.put(key.toLowerCase(), formula);
+                }
+            }
+        } else {
+            String legacy = cfg.getString("MobXPModule.BaseFormula", "30 + (0.4 * (level ^ 2.25))");
+            formulas.put("default", legacy);
+        }
+        baseFormula  = formulas.getOrDefault("default", "30 + (0.4 * (level ^ 2.25))");
+
+        cfg.getStringList("MobXPModule.Blacklist").forEach(w -> blacklist.add(w.toLowerCase()));
 
         if (plugin.getConfigLoader().isModuleEnabled("MobXPModule"))
             plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -99,7 +117,8 @@ public class MobXPModule implements Listener {
         int level = (int) Math.round(rawLevel);
 
         if (event.getKiller() instanceof Player player) {
-            double xp = getExperienceGain(level);
+            String world = player.getWorld().getName();
+            double xp = getExperienceGain(level, world);
             rewardExperience(player, xp);
         }
     }
@@ -149,15 +168,23 @@ public class MobXPModule implements Listener {
 
     /** Public for other modules / admin commands. */
     public double getExperienceGain(int level) {
-        return calculateExpression(level);
+        return getExperienceGain(level, "default");
     }
 
-    private double calculateExpression(int level) {
-        /* Cached? */
-        Double cached = cacheEXP.get(level);
+    /** XP gain using world specific formula */
+    public double getExperienceGain(int level, String world) {
+        if (blacklist.contains(world.toLowerCase())) return 0;
+
+        String formula = formulas.getOrDefault(world.toLowerCase(), baseFormula);
+        return calculateExpression(formula, world, level);
+    }
+
+    private double calculateExpression(String formula, String world, int level) {
+        Map<Integer, Double> worldMap = worldCache.computeIfAbsent(world.toLowerCase(), k -> new ConcurrentHashMap<>());
+        Double cached = worldMap.get(level);
         if (cached != null) return cached;
 
-        String exprString = baseFormula.replace("{level}", "level");
+        String exprString = formula.replace("{level}", "level");
 
         double result;
         try {
@@ -180,7 +207,7 @@ public class MobXPModule implements Listener {
             result = 0;
         }
 
-        cacheEXP.put(level, result);
+        worldMap.put(level, result);
         return result;
     }
 
@@ -193,7 +220,7 @@ public class MobXPModule implements Listener {
 
     public void setBaseFormula(String baseFormula) {
         this.baseFormula = baseFormula;
-        cacheEXP.clear();
+        worldCache.clear();
     }
 
     public void setTitleMessage(String titleMessage) { this.titleMessage = titleMessage; }

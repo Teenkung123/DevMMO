@@ -7,6 +7,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 public class ConfigLoader {
@@ -66,12 +68,34 @@ public class ConfigLoader {
                 resourceStream.close();
             }
 
-            // Load and return the configuration
-            return YamlConfiguration.loadConfiguration(file);
+            FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+
+            try (InputStream defStream = plugin.getResource(filename)) {
+                if (defStream != null) {
+                    FileConfiguration defConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(defStream, StandardCharsets.UTF_8));
+                    boolean changed = mergeDefaults(config, defConfig);
+                    if (changed) {
+                        config.save(file);
+                    }
+                }
+            }
+
+            return config;
         } catch (IOException e) {
             plugin.getLogger().severe("Could not load configuration file " + filename);
             return null;
         }
+    }
+
+    private boolean mergeDefaults(FileConfiguration config, FileConfiguration defaults) {
+        boolean changed = false;
+        for (String key : defaults.getKeys(true)) {
+            if (!config.contains(key)) {
+                config.set(key, defaults.get(key));
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     /**

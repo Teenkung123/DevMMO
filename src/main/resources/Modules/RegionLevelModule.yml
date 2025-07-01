@@ -1,23 +1,11 @@
 RegionLevel:
   DebugMode: false
+  MobName:
+    default: "&aLv.&e<level> &r&f<name>"
+    demonking: "&cLv.&4<level> &r&l<name>"
   Regions:
     greenhaven_plains:
       BaseLevel: 1
       Weight:
         '2': 66
         '3-10': 33
-
-RegionLevelNew:
-  DebugMode: false
-  Regions:
-    greenhaven_plains:
-      BaseLevel: 1
-      Weight:
-        '2': 66
-        '3-10': 33
-      Custom:
-        example_mob:
-          BaseLevel: 1
-          Weight:
-            '2': 50
-            '3-10': 50

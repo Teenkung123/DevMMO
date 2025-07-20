@@ -25,6 +25,7 @@ public class ConfigLoader {
     private FileConfiguration expShareConfig;
     private FileConfiguration regionLevelConfig;
     private FileConfiguration bossDamageListConfig;
+    private FileConfiguration auraSkillIntegrationConfig;
 
     public ConfigLoader(DevMMO plugin) {
         this.plugin = plugin;
@@ -46,6 +47,7 @@ public class ConfigLoader {
         expShareConfig = loadConfig("Modules/EXPShareModule.yml");
         regionLevelConfig = loadConfig("Modules/RegionLevelModule.yml");
         bossDamageListConfig = loadConfig("Modules/BossDamageList.yml");
+        auraSkillIntegrationConfig = loadConfig("Modules/AuraSkillIntegration.yml");
     }
 
     /**
@@ -173,5 +175,13 @@ public class ConfigLoader {
      */
     public Configuration getBossDamageListConfig() {
         return bossDamageListConfig;
+    }
+
+    /**
+     * Gets the FileConfiguration for AuraSkillIntegration.
+     * @return The AuraSkillIntegration configuration.
+     */
+    public Configuration getAuraSkillIntegrationConfig() {
+        return auraSkillIntegrationConfig;
     }
 }

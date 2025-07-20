@@ -1,0 +1,25 @@
+mana_abilities:
+  replenish:
+    base_cost: 20
+    cost_level: 12
+  treecapitator:
+    base_cost: 20
+    cost_level: 12
+  speed_mine:
+    base_cost: 20
+    cost_level: 12
+  sharp_hook:
+    base_cost: 5
+    cost_level: 2
+  terraform:
+    base_cost: 20
+    cost_level: 12
+  charged_shot:
+    base_cost: 10
+    cost_level: 5
+  absorption:
+    base_cost: 10
+    cost_level: 10
+  lightning_blade:
+    base_cost: 20
+    cost_level: 12

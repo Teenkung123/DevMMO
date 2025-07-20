@@ -45,8 +45,8 @@ public class HealthModule implements Listener {
         }
 
         Double storedHP = healthCache.get(player.getUniqueId());
-        if (storedHP != null && player.getAttribute(Attribute.GENERIC_MAX_HEALTH) != null) {
-            double maxHP = player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+        if (storedHP != null && player.getAttribute(Attribute.MAX_HEALTH) != null) {
+            double maxHP = player.getAttribute(Attribute.MAX_HEALTH).getValue();
             player.setHealth(Math.min(storedHP, maxHP));
         }
         healthCache.remove(player.getUniqueId());

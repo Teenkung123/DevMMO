@@ -9,27 +9,56 @@ repositories {
     mavenCentral()
     maven {
         name = "papermc-repo"
-        url = "https://repo.papermc.io/repository/maven-public/"
+        url  = "https://repo.papermc.io/repository/maven-public/"
     }
     maven {
         name = "sonatype"
-        url = "https://oss.sonatype.org/content/groups/public/"
+        url  = "https://oss.sonatype.org/content/groups/public/"
     }
-    maven { url 'https://mvn.lumine.io/repository/maven-public/' }
+    maven { url = "https://mvn.lumine.io/repository/maven-public/" }
     maven {
         name = "phoenix"
-        url = 'https://nexus.phoenixdevt.fr/repository/maven-public/'
+        url  = "https://nexus.phoenixdevt.fr/repository/maven-public/"
     }
-    maven { url "https://maven.enginehub.org/repo/" }
+    maven { url = "https://maven.enginehub.org/repo/" }
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+    // Paper API (exclude Guava, Gson, FastUtil)
+    compileOnly("io.papermc.paper:paper-api:1.21.7-R0.1-SNAPSHOT") {
+        exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'com.google.code.gson', module: 'gson'
+        exclude group: 'it.unimi.dsi',        module: 'fastutil'
+    }
+
+    // WorldGuard (exclude Guava, Gson, FastUtil)
+    compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.1.0-SNAPSHOT") {
+        exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'com.google.code.gson', module: 'gson'
+        exclude group: 'it.unimi.dsi',        module: 'fastutil'
+    }
+
+    // Your other compile-only deps
     compileOnly("io.lumine:MythicLib-dist:1.6-SNAPSHOT")
     compileOnly 'io.lumine:Mythic-Dist:5.3.5-SNAPSHOT'
     compileOnly 'net.Indyuce:MMOCore-API:1.12.1-SNAPSHOT'
-    compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.1.0-SNAPSHOT'
+    compileOnly 'dev.aurelium:auraskills-api-bukkit:2.2.4'
+
+    // Always compile against the server’s versions:
+    compileOnly 'com.google.guava:guava:32.1.3-jre'
+    compileOnly 'com.google.code.gson:gson:2.10.1'
+    compileOnly 'it.unimi.dsi:fastutil:8.5.12'
+
     implementation 'net.objecthunter:exp4j:0.4.8'
+}
+
+// Force a single version for Guava, Gson & FastUtil
+configurations.all {
+    resolutionStrategy {
+        force 'com.google.guava:guava:32.1.3-jre'
+        force 'com.google.code.gson:gson:2.10.1'
+        force 'it.unimi.dsi:fastutil:8.5.12'
+    }
 }
 
 def targetJavaVersion = 21
@@ -37,6 +66,7 @@ java {
     def javaVersion = JavaVersion.toVersion(targetJavaVersion)
     sourceCompatibility = javaVersion
     targetCompatibility = javaVersion
+
     if (JavaVersion.current() < javaVersion) {
         toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }

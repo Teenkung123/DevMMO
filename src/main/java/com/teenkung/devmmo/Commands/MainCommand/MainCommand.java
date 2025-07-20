@@ -1,12 +1,19 @@
 package com.teenkung.devmmo.Commands.MainCommand;
 
 import com.teenkung.devmmo.DevMMO;
+import com.teenkung.devmmo.Modules.AuraSkillIntegration.CustomTraits;
+import dev.aurelium.auraskills.api.AuraSkillsApi;
+import dev.aurelium.auraskills.api.trait.TraitModifier;
+import dev.aurelium.auraskills.api.util.AuraSkillsModifier;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.*;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 public class MainCommand implements CommandExecutor, TabCompleter {
 
@@ -37,7 +44,7 @@ public class MainCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>DevMMO reloaded in <gold>" + (System.currentTimeMillis() - start) + "ms<green>."));
             return true;
         }
-        return true;
+        return false;
     }
 
     @Nullable

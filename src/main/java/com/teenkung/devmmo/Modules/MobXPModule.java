@@ -6,12 +6,15 @@ import io.lumine.mythic.core.mobs.ActiveMob;
 import net.Indyuce.mmocore.api.event.PlayerExperienceGainEvent;
 import net.Indyuce.mmocore.api.player.PlayerData;
 import net.Indyuce.mmocore.experience.EXPSource;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.title.Title;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -148,7 +151,8 @@ public class MobXPModule implements Listener {
                     MiniMessage.miniMessage().deserialize(titleMessage.replace("{exp}", formatted)),
                     Title.Times.times(Duration.ofMillis(fadeIn), Duration.ofMillis(stay), Duration.ofMillis(fadeOut))
             ));
-            player.playSound(player.getLocation(), Sound.valueOf(soundName), volume, pitch);
+            Sound sound = Registry.SOUND_EVENT.get(Key.key(soundName));
+            if (sound != null) player.playSound(player.getLocation(), sound, volume, pitch);
         }, 3L);
     }
 

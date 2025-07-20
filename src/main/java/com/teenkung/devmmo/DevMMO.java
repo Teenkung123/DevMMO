@@ -5,6 +5,7 @@ import com.teenkung.devmmo.Commands.SpawnMythicMobs.SpawnMythicMobs;
 import com.teenkung.devmmo.Commands.SpawnMythicMobs.SpawnMythicMobsTab;
 import com.teenkung.devmmo.Developcraft.Developcraft;
 import com.teenkung.devmmo.Modules.*;
+import com.teenkung.devmmo.Modules.AuraSkillIntegration.AuraSkillIntegration;
 import com.teenkung.devmmo.Utils.ConfigLoader;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -26,6 +27,7 @@ public class DevMMO extends JavaPlugin {
     private EXPShareModule expShareModule;
     private RegionLevelModule regionLevelModule;
     private BossDamageList bossDamageList;
+    private AuraSkillIntegration auraSkillIntegration;
 
     @Override
     public void onEnable() {
@@ -58,6 +60,7 @@ public class DevMMO extends JavaPlugin {
         this.expShareModule = new EXPShareModule(this);
         this.regionLevelModule = new RegionLevelModule(this);
         this.bossDamageList = new BossDamageList(this);
+        this.auraSkillIntegration = new AuraSkillIntegration(this);
 
         developcraft.loadAll();
 
@@ -71,6 +74,7 @@ public class DevMMO extends JavaPlugin {
     public void unloadAll() {
         developcraft.unloadAll();
         staminaModule.shutdown();
+        auraSkillIntegration.shutdown();
         HandlerList.unregisterAll(healthModule);
         HandlerList.unregisterAll(staminaModule);
         HandlerList.unregisterAll(fireworkBlocker);
@@ -79,6 +83,7 @@ public class DevMMO extends JavaPlugin {
         HandlerList.unregisterAll(expShareModule);
         HandlerList.unregisterAll(regionLevelModule);
         HandlerList.unregisterAll(bossDamageList);
+        HandlerList.unregisterAll(auraSkillIntegration);
         HandlerList.unregisterAll(this);
     }
 
@@ -129,5 +134,7 @@ public class DevMMO extends JavaPlugin {
     }
 
     public BossDamageList getBossDamageList() { return bossDamageList; }
+
+    public AuraSkillIntegration getAuraSkillIntegration() { return auraSkillIntegration; }
 
 }

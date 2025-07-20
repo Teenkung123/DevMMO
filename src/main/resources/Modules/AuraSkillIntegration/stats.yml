@@ -1,0 +1,28 @@
+devmmo/mmo_damage_reduction:
+  enabled: true
+  display: "Damage Reduction"
+
+devmmo/mmo_weapon_damage:
+  enabled: true
+  display: "Attack Damage"
+  use_percent: true
+
+devmmo/mmo_max_health:
+  enabled: true
+  display: "Max Health"
+
+devmmo/mmo_dodge_rating:
+  enabled: true
+  display: "Dodge Rating"
+
+devmmo/mmo_health_regeneration:
+  enabled: true
+  display: "Health Regeneration"
+
+devmmo/mmo_cooldown_reduction:
+  enabled: true
+  display: "Cooldown Reduction"
+
+devmmo/mmo_additional_experience:
+  enabled: true
+  display: "Additional Experience"

@@ -18,3 +18,6 @@ RegionLevel:
 
 BossDamageList:
   Enabled: false
+
+AuraSkillIntegration:
+  Enabled: false
